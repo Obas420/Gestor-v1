@@ -553,8 +553,14 @@
 
                     // Añadir evento al input para editar el título
                     const titleInput = card.querySelector('.title-edit');
-                    titleInput.addEventListener('change', (e) => updateProjectTitle(project.id, e.target.value));
-                    titleInput.addEventListener('blur', (e) => updateProjectTitle(project.id, e.target.value));
+                    titleInput.addEventListener('change', (e) => {
+                        updateProjectTitle(project.id, e.target.value);
+                        saveProjects();
+                    });
+                    titleInput.addEventListener('blur', (e) => {
+                        updateProjectTitle(project.id, e.target.value);
+                        saveProjects();
+                    });
 
                     // Evento para el botón de borrar
                     const deleteButton = card.querySelector('.delete-btn');
@@ -606,7 +612,10 @@
 
             function updateProjectTitle(id, newTitle) {
                 const project = projects.find(p => p.id === id);
-                if (project) project.title = newTitle;
+                if (project) {
+                    project.title = newTitle;
+                    renderProjects();
+                }
                 saveProjects();
             }
 
