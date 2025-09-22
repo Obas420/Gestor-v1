@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portafolio Interactivo</title>
+    <style>
+        /* Estilos Generales */
+        :root {
+            --primary-color: #333;
+            --secondary-color: #f4f4f4;
+            --accent-color: #007bff;
+            --background-color: #fff;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--primary-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Encabezado */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .edit-toggle {
+            cursor: pointer;
+            padding: 8px 16px;
+            border: 1px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .edit-toggle.active {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        /* Grid de Proyectos */
+        #project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding-bottom: 20px;
+        }
+
+        .project-card {
+            background-color: var(--secondary-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            border: 2px solid transparent;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 350px;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .project-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .project-card.edit-mode .title-edit {
+            pointer-events: auto;
+            border-bottom: 1px solid var(--primary-color);
+        }
+
+        .project-card.edit-mode.hover-effect:hover {
+            border: 2px dashed var(--accent-color);
+        }
+        
+        .title-edit {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            width: 100%;
+            pointer-events: none;
+            cursor: text;
+        }
+        
+        .project-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: #ddd;
+            display: block;
+            pointer-events: none;
+        }
+
+        .project-card-image.edit-mode {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .project-card.edit-mode .delete-btn {
+            display: flex;
+        }
+
+        .add-card {
+            border: 2px dashed #ccc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 350px;
+            transition: all 0.3s ease;
+        }
+
+        .add-card:hover {
+            background-color: #f9f9f9;
+        }
+
+        .add-card .plus-icon {
+            font-size: 3em;
+            color: #ccc;
+        }
+
+        .add-card p {
+            margin: 10px 0 0;
+            color: #888;
+        }
+
+        /* Modal de Proyecto */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            max-width: 900px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+        
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2em;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header .title-edit {
+            font-size: 2em;
+        }
+
+        .modal-body {
+            display: flex;
+            gap: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .modal-image-container {
+            flex: 1;
+            position: relative;
+            min-height: 300px;
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: var(--border-radius);
+            background-color: #eee;
+        }
+
+        .modal-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .modal-image-container:hover .modal-image-overlay.edit-mode {
+            display: flex;
+        }
+
+        .modal-description-container {
+            flex: 1;
+        }
+        
+        .modal-description {
+            width: 100%;
+            min-height: 200px;
+            border: 1px solid #ccc;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            overflow-y: auto;
+            pointer-events: none;
+            resize: vertical;
+        }
+
+        .modal-description.edit-mode {
+            pointer-events: auto;
+        }
+
+        .modal-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .modal-nav button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-nav button:hover {
+            background-color: #0056b3;
+        }
+
+        .page-counter {
+            font-size: 1em;
+            color: #777;
+        }
+
+        .add-page-btn, .delete-page-btn {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 1em;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .add-page-btn.edit-mode, .delete-page-btn.edit-mode {
+            display: inline-block;
+        }
+
+        .delete-page-btn {
+            background-color: #f44336;
+        }
+        
+        .delete-page-btn.edit-mode.disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+        
+        /* Modal de confirmación */
+        .confirm-modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            max-width: 400px;
+            width: 80%;
+            text-align: center;
+        }
+
+        .confirm-modal-content h2 {
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+
+        .confirm-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .confirm-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        #confirmDeleteBtn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        #cancelDeleteBtn {
+            background-color: #ccc;
+            color: var(--primary-color);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modal-content {
+                flex-direction: column;
+            }
+            .modal-image-container {
+                min-height: 200px;
+            }
+            .modal-nav {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Portafolio</h1>
+            <button id="edit-toggle" class="edit-toggle">Modo de Edición</button>
+        </header>
+        <div id="project-grid">
+            <!-- Las tarjetas de proyecto se renderizarán aquí -->
+        </div>
+    </div>
+
+    <!-- Modal de Proyecto -->
+    <div id="project-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header">
+                <input type="text" id="modal-title" class="title-edit" readonly>
+            </div>
+            <div class="modal-body">
+                <div class="modal-image-container">
+                    <img id="modal-image" class="modal-image" src="" alt="Imagen de proyecto">
+                    <div id="image-overlay" class="modal-image-overlay">
+                        <span>Arrastra y suelta una imagen aquí</span>
+                    </div>
+                </div>
+                <div class="modal-description-container">
+                    <div id="modal-description" class="modal-description" contenteditable="false"></div>
+                </div>
+            </div>
+            <div class="modal-nav">
+                <button id="prevPageBtn">Anterior</button>
+                <span id="page-counter" class="page-counter">Página 1 de 1</span>
+                <button id="nextPageBtn">Siguiente</button>
+            </div>
+            <div style="text-align: center;">
+                <button id="addPageBtn" class="add-page-btn">Añadir Página</button>
+                <button id="deletePageBtn" class="delete-page-btn">Borrar Página</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Borrado -->
+    <div id="confirm-modal" class="modal">
+        <div class="confirm-modal-content">
+            <h2>¿Estás seguro?</h2>
+            <p>Esta acción eliminará el proyecto permanentemente.</p>
+            <div class="confirm-buttons">
+                <button id="confirmDeleteBtn">Sí, Eliminar</button>
+                <button id="cancelDeleteBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- ESTADO Y DATOS INICIALES (AHORA DESDE NEON) ---
+            let projects = []; // Inicializamos vacío, se cargará de la DB
+            let isEditMode = false;
+            let draggedItem = null;
+            let currentModalState = { projectId: null, pageIndex: 0 };
+            let projectToDeleteId = null;
+
+            // --- FUNCIÓN DE GUARDADO PERSISTENTE (LLAMA A update-projects.js) ---
+            async function saveProjects() {
+                 if (!isEditMode) return; 
+                 try {
+                     const response = await fetch("/.netlify/functions/update-projects", {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(projects) 
+                     });
+                     
+                     if (!response.ok) {
+                         const errorBody = await response.json();
+                         throw new Error(`Error ${response.status}: ${errorBody.error || 'Fallo desconocido'}`);
+                     }
+                     console.log("Datos guardados exitosamente en Neon.");
+                     
+                 } catch (error) {
+                     console.error("Fallo en el guardado persistente:", error);
+                     alert("Advertencia: No se pudo guardar el cambio permanentemente. Revisa la consola para más detalles.");
+                 }
+            }
+
+            // --- FUNCIÓN DE CARGA DESDE EL BACKEND (LLAMA A get-projects.js) ---
+            async function loadProjectsAndRender() {
+                try {
+                    // Endpoint de la Netlify Function
+                    const response = await fetch("/.netlify/functions/get-projects");
+                    if (!response.ok) throw new Error('Error al cargar del backend');
+                    
+                    const data = await response.json();
+                    
+                    // Convertir IDs de string a número (PostgreSQL devuelve BIGINT como string en JSON)
+                    projects = data.map(p => ({
+                        ...p,
+                        id: Number(p.id),
+                        pages: p.pages.map(page => ({
+                             ...page,
+                             pageId: Number(page.pageId)
+                        }))
+                    }));
+
+                    renderProjects();
+                } catch (error) {
+                    console.error("Error al cargar proyectos:", error);
+                    alert("No se pudieron cargar los proyectos. Se están usando datos vacíos. Revise si las Netlify Functions están desplegadas.");
+                    projects = []; 
+                    renderProjects();
+                }
+            }
+
+            // --- ELEMENTOS DEL DOM ---
+            const editToggleBtn = document.getElementById('edit-toggle');
+            const projectGrid = document.getElementById('project-grid');
+            const projectModal = document.getElementById('project-modal');
+            const closeModalBtn = projectModal.querySelector('.close-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const modalImage = document.getElementById('modal-image');
+            const modalDescription = document.getElementById('modal-description');
+            const imageOverlay = document.getElementById('image-overlay');
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            const pageCounter = document.getElementById('page-counter');
+            const confirmDeleteModal = document.getElementById('confirm-modal');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+            const addPageBtn = document.getElementById('addPageBtn');
+            const deletePageBtn = document.getElementById('deletePageBtn');
+            
+            // --- FUNCIONES DE RENDERIZADO Y LÓGICA ---
+
+            function renderProjects() {
+                projectGrid.innerHTML = ''; // Limpiar el grid
+
+                projects.forEach(project => {
+                    const card = document.createElement('div');
+                    card.classList.add('project-card');
+                    card.setAttribute('draggable', isEditMode ? 'true' : 'false');
+                    card.dataset.id = project.id;
+
+                    // Usar la primera imagen del array de páginas, si existe
+                    const firstImage = project.pages.length > 0 ? project.pages[0].imageUrl : 'https://placehold.co/600x400/e0e0e0/555555?text=Sin+Imagen';
+
+                    card.innerHTML = `
+                        <input type="text" class="title-edit" value="${project.title}" ${!isEditMode ? 'readonly' : ''}>
+                        <img src="${firstImage}" alt="${project.title}" class="project-card-image">
+                        <button class="delete-btn" style="display: ${isEditMode ? 'flex' : 'none'};">&times;</button>
+                    `;
+                    projectGrid.appendChild(card);
+
+                    // Añadir evento al input para editar el título
+                    const titleInput = card.querySelector('.title-edit');
+                    titleInput.addEventListener('change', (e) => updateProjectTitle(project.id, e.target.value));
+                    titleInput.addEventListener('blur', (e) => updateProjectTitle(project.id, e.target.value));
+
+                    // Evento para el botón de borrar
+                    const deleteButton = card.querySelector('.delete-btn');
+                    deleteButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        projectToDeleteId = project.id;
+                        openModal(confirmDeleteModal);
+                    });
+                });
+
+                // Añadir la tarjeta de "añadir proyecto" si estamos en modo edición
+                if (isEditMode) {
+                    const addCard = document.createElement('div');
+                    addCard.classList.add('add-card');
+                    addCard.innerHTML = `
+                        <span class="plus-icon">+</span>
+                        <p>Añadir Nuevo Proyecto</p>
+                    `;
+                    addCard.addEventListener('click', addProject);
+                    projectGrid.appendChild(addCard);
+                }
+            }
+
+            function renderCurrentModalPage() {
+                const project = projects.find(p => p.id === currentModalState.projectId);
+                if (project && project.pages.length > 0) {
+                    const currentPage = project.pages[currentModalState.pageIndex];
+                    modalTitle.value = project.title;
+                    modalImage.src = currentPage.imageUrl;
+                    modalDescription.textContent = currentPage.description;
+
+                    modalTitle.readOnly = !isEditMode;
+                    modalDescription.contentEditable = isEditMode;
+                    imageOverlay.style.display = isEditMode ? 'flex' : 'none';
+                    addPageBtn.style.display = isEditMode ? 'inline-block' : 'none';
+                    deletePageBtn.style.display = (isEditMode && project.pages.length > 1) ? 'inline-block' : 'none';
+
+                    pageCounter.textContent = `Página ${currentModalState.pageIndex + 1} de ${project.pages.length}`;
+                }
+            }
+            
+            function openModal(modal) {
+                modal.classList.add('active');
+            }
+
+            function closeModal(modal) {
+                modal.classList.remove('active');
+            }
+
+            function updateProjectTitle(id, newTitle) {
+                const project = projects.find(p => p.id === id);
+                if (project) project.title = newTitle;
+                saveProjects();
+            }
+
+            function addProject() {
+                const newProject = {
+                    id: Date.now(), // Usar Date.now() como ID único
+                    title: "Nuevo Proyecto",
+                    pages: [{
+                        pageId: Date.now() + 1,
+                        description: "Añade una descripción aquí.",
+                        imageUrl: "https://placehold.co/600x400/e0e0e0/555555?text=Nueva+Imagen"
+                    }]
+                };
+                projects.push(newProject);
+                renderProjects();
+                saveProjects();
+            }
+
+            // --- EVENTOS ---
+
+            editToggleBtn.addEventListener('click', () => {
+                isEditMode = !isEditMode;
+                editToggleBtn.classList.toggle('active', isEditMode);
+                editToggleBtn.textContent = isEditMode ? 'Salir del Modo Edición' : 'Modo de Edición';
+                renderProjects();
+
+                if (projectModal.classList.contains('active')) {
+                    modalTitle.readOnly = !isEditMode;
+                    modalDescription.contentEditable = isEditMode;
+                    imageOverlay.style.display = isEditMode ? 'flex' : 'none';
+                    addPageBtn.style.display = isEditMode ? 'inline-block' : 'none';
+                    const project = projects.find(p => p.id === currentModalState.projectId);
+                    deletePageBtn.style.display = (isEditMode && project.pages.length > 1) ? 'inline-block' : 'none';
+                }
+            });
+
+            projectGrid.addEventListener('click', (e) => {
+                const card = e.target.closest('.project-card');
+                if (card && !e.target.classList.contains('delete-btn')) {
+                    const projectId = parseInt(card.dataset.id);
+                    currentModalState.projectId = projectId;
+                    currentModalState.pageIndex = 0;
+                    renderCurrentModalPage();
+                    openModal(projectModal);
+                }
+            });
+            
+            closeModalBtn.addEventListener('click', () => closeModal(projectModal));
+            cancelDeleteBtn.addEventListener('click', () => closeModal(confirmDeleteModal));
+
+            confirmDeleteBtn.addEventListener('click', () => {
+                if (projectToDeleteId !== null) {
+                    projects = projects.filter(p => p.id !== projectToDeleteId);
+                    renderProjects();
+                    saveProjects();
+                }
+                closeModal(confirmDeleteModal);
+                projectToDeleteId = null;
+            });
+
+            modalDescription.addEventListener('blur', () => {
+                 if (isEditMode) {
+                    const project = projects.find(p => p.id === currentModalState.projectId);
+                    if (project) {
+                        project.pages[currentModalState.pageIndex].description = modalDescription.textContent;
+                        saveProjects();
+                    }
+                 }
+            });
+            
+            modalTitle.addEventListener('change', (e) => {
+                if (isEditMode) {
+                    const project = projects.find(p => p.id === currentModalState.projectId);
+                    if (project) {
+                        project.title = e.target.value;
+                        renderProjects();
+                        saveProjects();
+                    }
+                }
+            });
+
+            prevPageBtn.addEventListener('click', () => {
+                const project = projects.find(p => p.id === currentModalState.projectId);
+                if (project && currentModalState.pageIndex > 0) {
+                    currentModalState.pageIndex--;
+                    renderCurrentModalPage();
+                }
+            });
+
+            nextPageBtn.addEventListener('click', () => {
+                const project = projects.find(p => p.id === currentModalState.projectId);
+                if (project && currentModalState.pageIndex < project.pages.length - 1) {
+                    currentModalState.pageIndex++;
+                    renderCurrentModalPage();
+                }
+            });
+
+            addPageBtn.addEventListener('click', () => {
+                const project = projects.find(p => p.id === currentModalState.projectId);
+                if (project) {
+                    project.pages.push({
+                        pageId: Date.now(),
+                        description: 'Nueva descripción de página.',
+                        imageUrl: 'https://placehold.co/600x400/f0f0f0/777?text=Nueva+Página'
+                    });
+                    currentModalState.pageIndex = project.pages.length - 1;
+                    renderCurrentModalPage();
+                    saveProjects();
+                }
+            });
+
+            deletePageBtn.addEventListener('click', () => {
+                const project = projects.find(p => p.id === currentModalState.projectId);
+                if (project && project.pages.length > 1) {
+                    project.pages.splice(currentModalState.pageIndex, 1);
+                    if (currentModalState.pageIndex >= project.pages.length) {
+                        currentModalState.pageIndex = project.pages.length - 1;
+                    }
+                    renderCurrentModalPage();
+                    if (currentModalState.pageIndex === 0) {
+                        renderProjects();
+                    }
+                    saveProjects();
+                }
+            });
+
+            // Lógica de Drag & Drop para reordenar
+            let currentDraggable = null;
+
+            projectGrid.addEventListener('dragstart', (e) => {
+                if (!isEditMode) return;
+                currentDraggable = e.target.closest('.project-card');
+                if (currentDraggable) {
+                    currentDraggable.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+            
+            projectGrid.addEventListener('dragend', () => {
+                if (currentDraggable) {
+                    currentDraggable.classList.remove('dragging');
+                    currentDraggable = null;
+                }
+            });
+
+            projectGrid.addEventListener('dragover', (e) => {
+                if (!isEditMode) return;
+                e.preventDefault();
+                const afterElement = getDragAfterElement(projectGrid, e.clientX);
+                const currentDraggedElement = document.querySelector('.dragging');
+                if (currentDraggedElement) {
+                    if (afterElement == null) {
+                        projectGrid.appendChild(currentDraggedElement);
+                    } else {
+                        projectGrid.insertBefore(currentDraggedElement, afterElement);
+                    }
+                }
+                
+                // Actualizar el orden del array projects después de un movimiento
+                if (currentDraggable) {
+                    const newOrderIds = [...projectGrid.querySelectorAll('.project-card')].map(card => parseInt(card.dataset.id));
+                    projects.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
+                    saveProjects();
+                }
+            });
+
+            function getDragAfterElement(container, x) {
+                const draggableElements = [...container.querySelectorAll('.project-card:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = x - box.left - box.width / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // Lógica de Drag & Drop para imágenes en el modal
+            function handleImageDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                imageOverlay.classList.add('hover-effect');
+            }
+
+            function handleImageDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                imageOverlay.classList.remove('hover-effect');
+            }
+
+            function handleImageDrop(e, projectId, pageIndex) {
+                e.preventDefault();
+                e.stopPropagation();
+                imageOverlay.classList.remove('hover-effect');
+
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const newImageUrl = event.target.result;
+                        const project = projects.find(p => p.id === projectId);
+                        if(project && project.pages[pageIndex]) {
+                            project.pages[pageIndex].imageUrl = newImageUrl;
+                            
+                            // Actualizar UI
+                            if (projectModal.classList.contains('active') && currentModalState.projectId === projectId) {
+                                renderCurrentModalPage();
+                            }
+                            if (pageIndex === 0) { // Si es la primera imagen, refrescar el grid
+                                renderProjects();
+                            }
+                            saveProjects();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            modalImage.addEventListener('dragover', (e) => { if (isEditMode) handleImageDragOver(e); });
+            modalImage.addEventListener('dragleave', (e) => { if (isEditMode) handleImageDragLeave(e); });
+            modalImage.addEventListener('drop', (e) => {
+                if (isEditMode) {
+                   handleImageDrop(e, currentModalState.projectId, currentModalState.pageIndex);
+                }
+            });
+
+            // --- INICIALIZACIÓN ---
+            loadProjectsAndRender();
+        });
+    </script>
+</body>
+</html>
